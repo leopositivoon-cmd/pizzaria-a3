@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Produtos - Pizzaria</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Gestão de Produtos</h1>
+            <nav>
+                <a href="admin.html">Pedidos</a>
+                <a href="produtos.html" class="active">Produtos</a>
+                <a href="clientes.html">Clientes</a>
+                <a href="index.html">Sair</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="acoes-admin">
+            <h2>Novo Produto</h2>
+            <form id="produtoForm">
+                <input type="text" id="nome" placeholder="Nome do Produto" required>
+                <select id="tipo" required>
+                    <option value="PIZZA">Pizza</option>
+                    <option value="BEBIDA">Bebida</option>
+                    <option value="BORDA">Borda</option>
+                </select>
+                <input type="number" id="preco" step="0.01" placeholder="Preço" required>
+                <input type="text" id="descricao" placeholder="Descrição">
+                <button type="submit" class="btn-status">Salvar Produto</button>
+            </form>
+        </section>
+
+        <section class="lista-pedidos">
+            <h2>Produtos Cadastrados</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>Preço</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaProdutos">
+                    <!-- Preenchido via JS -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = "http://localhost:8082/produtos";
+        const token = localStorage.getItem('token');
+
+        if (!token) window.location.href = 'login.html';
+
+        async function carregarProdutos() {
+            const response = await fetch(API_URL, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const produtos = await response.json();
+            const tbody = document.getElementById('listaProdutos');
+            tbody.innerHTML = '';
+            produtos.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td>${p.nome}</td>
+                        <td>${p.tipo}</td>
+                        <td>R$ ${p.preco.toFixed(2)}</td>
+                        <td>
+                            <button onclick="excluirProduto(${p.id})" class="btn-excluir">Excluir</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('produtoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const produto = {
+                nome: document.getElementById('nome').value,
+                tipo: document.getElementById('tipo').value,
+                preco: parseFloat(document.getElementById('preco').value),
+                descricao: document.getElementById('descricao').value
+            };
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(produto)
+            });
+            carregarProdutos();
+            e.target.reset();
+        });
+
+        async function excluirProduto(id) {
+            if (confirm('Deseja excluir este produto?')) {
+                await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                carregarProdutos();
+            }
+        }
+
+        carregarProdutos();
+    </script>
+</body>
+</html>

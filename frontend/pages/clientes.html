@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Clientes - Pizzaria</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Gestão de Clientes</h1>
+            <nav>
+                <a href="admin.html">Pedidos</a>
+                <a href="produtos.html">Produtos</a>
+                <a href="clientes.html" class="active">Clientes</a>
+                <a href="index.html">Sair</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="lista-pedidos">
+            <h2>Clientes Cadastrados</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Endereço</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaClientes">
+                    <!-- Preenchido via JS -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = "http://localhost:8081/clientes";
+        const token = localStorage.getItem('token');
+
+        if (!token) window.location.href = 'login.html';
+
+        async function carregarClientes() {
+            try {
+                const response = await fetch(API_URL);
+                const clientes = await response.json();
+                const tbody = document.getElementById('listaClientes');
+                tbody.innerHTML = '';
+                clientes.forEach(c => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${c.id}</td>
+                            <td>${c.nome}</td>
+                            <td>${c.telefone}</td>
+                            <td>${c.endereco}, ${c.bairro}</td>
+                            <td>
+                                <button onclick="excluirCliente(${c.id})" class="btn-excluir">Excluir</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function excluirCliente(id) {
+            if (confirm('Deseja excluir este cliente? Isso pode afetar pedidos vinculados.')) {
+                await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+                carregarClientes();
+            }
+        }
+
+        carregarClientes();
+    </script>
+</body>
+</html>
